@@ -2,7 +2,6 @@ package loaded
 
 import (
 	"caged/base"
-	"caged/test"
 	"fmt"
 	"reflect"
 	"strings"
@@ -22,16 +21,28 @@ func (module *LoadedModule) Load() {
 	}
 }
 
+func (module *LoadedModule) LoadDependency(t reflect.Type) {
+	fmt.Println(t)
+}
+
 func (module *LoadedModule) LoadController(controller base.Controller) *LoadedController {
 	loadedController := CreateController()
 	classType := reflect.TypeOf(controller)
 	className := classType.Name()
-	dep := &test.Dep{}
-	dep.New()
 	for i := 0; i < classType.NumMethod(); i++ {
 		method := classType.Method(i)
+		params := make([]reflect.Value, method.Type.NumIn())
+		for j := 0; j < method.Type.NumIn(); j++ {
+			paramType := method.Type.In(j)
+			if paramType == classType {
+				params[j] = reflect.ValueOf(controller)
+			} else {
+
+				module.LoadDependency(paramType)
+			}
+		}
 		loadedController.methods[method.Name] = func() {
-			fmt.Println(method.Func.Call([]reflect.Value{reflect.ValueOf(controller), reflect.ValueOf(dep)}))
+			fmt.Println(method.Func.Call(params))
 		}
 	}
 	classNameLower := strings.ToLower(className)

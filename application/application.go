@@ -14,8 +14,8 @@ type Application struct {
 	loadedModule *loaded.LoadedModule
 }
 
-func Create(module *base.Module) *Application {
-	app := new(Application)
+func Create(module *base.Module) Application {
+	app := Application{}
 	app.module = module
 	app.loadedModule = inject.LoadModule(module)
 	return app

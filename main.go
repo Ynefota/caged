@@ -8,6 +8,8 @@ import (
 
 func main() {
 	module := base.Module{Controllers: []base.Controller{test.HelloWorldController{}}}
-	application.Create(&module).Listen(4000)
+	app := application.Create(&module)
 
+	pApp := &app
+	pApp.Listen(3000)
 }
