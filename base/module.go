@@ -1,8 +1,10 @@
 package base
 
+import "reflect"
+
 type Module struct {
-	Controllers []Controller
-	Providers   []Injectable
-	Imports     []Module
-	Exports     []Injectable
+	Controllers []reflect.Type
+	Providers   []reflect.Type
+	Imports     []reflect.Type
+	Exports     []reflect.Type
 }

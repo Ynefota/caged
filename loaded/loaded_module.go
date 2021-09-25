@@ -23,11 +23,11 @@ func (module *LoadedModule) Load() {
 
 func (module *LoadedModule) LoadDependency(t reflect.Type) {
 	fmt.Println(t)
+	// TODO load dependency of t and add to module (also return)
 }
 
-func (module *LoadedModule) LoadController(controller base.Controller) *LoadedController {
+func (module *LoadedModule) LoadController(classType reflect.Type) *LoadedController {
 	loadedController := CreateController()
-	classType := reflect.TypeOf(controller)
 	className := classType.Name()
 	for i := 0; i < classType.NumMethod(); i++ {
 		method := classType.Method(i)
@@ -35,9 +35,8 @@ func (module *LoadedModule) LoadController(controller base.Controller) *LoadedCo
 		for j := 0; j < method.Type.NumIn(); j++ {
 			paramType := method.Type.In(j)
 			if paramType == classType {
-				params[j] = reflect.ValueOf(controller)
+				// TODO set to new controller of classType
 			} else {
-
 				module.LoadDependency(paramType)
 			}
 		}
@@ -49,7 +48,6 @@ func (module *LoadedModule) LoadController(controller base.Controller) *LoadedCo
 	if strings.HasSuffix(classNameLower, "controller") {
 		className = className[0:strings.LastIndex(classNameLower, "controller")]
 	}
-	fmt.Println(className)
 	return loadedController
 }
 func (module *LoadedModule) LoadInjectable(injectable base.Injectable) *LoadedInjectable {
