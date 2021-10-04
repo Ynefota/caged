@@ -16,5 +16,5 @@ func main() {
 	app := application.Create(&module)
 
 	pApp := &app
-	pApp.Listen(3000)
+	pApp.Test()
 }

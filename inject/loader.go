@@ -6,8 +6,7 @@ import (
 )
 
 func LoadModule(module *base.Module) *loaded.LoadedModule {
-	loadedModule := new(loaded.LoadedModule)
-	loadedModule.Module = module
+	loadedModule := loaded.CreateModule(module)
 	loadedModule.Load()
 	return loadedModule
 }

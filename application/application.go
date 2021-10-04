@@ -26,3 +26,7 @@ func (app *Application) Listen(port int) {
 	strPort := ":" + strconv.Itoa(app.port)
 	http.ListenAndServe(strPort, nil)
 }
+
+func (app *Application) Test() {
+
+}
