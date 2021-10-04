@@ -54,17 +54,17 @@ func (module *LoadedModule) LoadModule(moduleType reflect.Type) *LoadedModule {
 	return newLoadedModule
 }
 
-func (module *LoadedModule) GetDependency(t reflect.Type) *LoadedInjectable {
+func (module *LoadedModule) GetInjectable(t reflect.Type) *base.Injectable {
 	if module.IsLoaded(t) {
 		fmt.Print("is loaded: ")
 		// injectable := module.LoadInjectable(t)
-		// TODO load from module
+		// TODO get dependency from module
 		// TODO check loading cycle and load dependent dependencies
 	} else {
 		fmt.Print("isn't loaded: ")
 	}
 	fmt.Println(t)
-	// TODO load dependency of t and add to module (also return)
+	// TODO just get dependency from module
 	return nil
 }
 
@@ -83,25 +83,31 @@ func (module *LoadedModule) LoadController(classType reflect.Type) *LoadedContro
 	loadedController := CreateController()
 	className := classType.Name()
 	controllerValue := reflect.New(classType)
-	for methodCounter := 0; methodCounter < classType.NumMethod(); methodCounter++ {
-		method := classType.Method(methodCounter)
+	for m := 0; m < classType.NumMethod(); m++ {
+		method := classType.Method(m)
 		paramsAmount := method.Type.NumIn()
 		params := make([]reflect.Value, method.Type.NumIn())
-		for paramCounter := 0; paramCounter < paramsAmount; paramCounter++ {
-			paramType := method.Type.In(paramCounter)
+		fmt.Println(reflect.TypeOf(params))
+		resPosition := -1
+		reqPosition := -1
+		for p := 0; p < paramsAmount; p++ {
+			paramType := method.Type.In(p)
 			if paramType == classType {
-				params[paramCounter] = controllerValue
-			} else if paramType.Implements(reflect.TypeOf((*http.Response)(nil)).Elem()) {
-				params[paramCounter] = reflect.ValueOf((*http.Response)(nil))
-			} else if paramType.Implements(reflect.TypeOf((*http.Request)(nil)).Elem()) {
-				params[paramCounter] = reflect.ValueOf((*http.Request)(nil))
+				params[p] = controllerValue
+			} else if paramType == reflect.TypeOf((*http.Response)(nil)).Elem() {
+				resPosition = p
+			} else if paramType == reflect.TypeOf((*http.Request)(nil)).Elem() {
+				reqPosition = p
 			} else if paramType.Implements(reflect.TypeOf((*base.Injectable)(nil)).Elem()) {
-				params[paramCounter] = reflect.ValueOf(module.GetDependency(paramType))
+				params[p] = reflect.ValueOf(module.GetInjectable(paramType))
 			}
 		}
 		loadedController.methods[method.Name] = func(res http.Response, req http.Request) {
-			for i := 0; i < paramsAmount; i++ { // TODO inject response and requests
-
+			if reqPosition != -1 {
+				params[reqPosition] = reflect.ValueOf(req)
+			}
+			if resPosition != -1 {
+				params[resPosition] = reflect.ValueOf(res)
 			}
 			fmt.Println(method.Func.Call(params)) // TODO think about injecting ResponseWriter and Request
 		}
