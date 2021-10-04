@@ -2,6 +2,7 @@ package loaded
 
 import (
 	"caged/base"
+	"caged/http"
 	"fmt"
 	"reflect"
 	"strings"
@@ -18,6 +19,21 @@ func CreateModule(module *base.Module) *LoadedModule {
 	loadedModule := &LoadedModule{}
 	loadedModule.Module = module
 	return loadedModule
+}
+
+func (module *LoadedModule) GetController(name string) *LoadedController {
+	for i := 0; i < len(module.Controllers); i++ {
+		if module.Controllers[i].name == name {
+			return module.Controllers[i]
+		}
+	}
+	for i := 0; i < len(module.Imports); i++ {
+		controller := module.Imports[i].GetController(name)
+		if controller != nil {
+			return controller
+		}
+	}
+	return nil
 }
 
 func (module *LoadedModule) Load() {
@@ -38,19 +54,18 @@ func (module *LoadedModule) LoadModule(moduleType reflect.Type) *LoadedModule {
 	return newLoadedModule
 }
 
-func (module *LoadedModule) LoadDependency(t reflect.Type) {
-	if t.Implements(reflect.TypeOf((*base.Injectable)(nil)).Elem()) {
-		if !module.IsLoaded(t) {
-			fmt.Println("is children of injectable")
-			// injectable := module.LoadInjectable(t)
-			// TODO load from module
-			// TODO check loading cycle and load dependent dependencies
-		} else {
-			fmt.Println("isn't a injectable")
-		}
-		fmt.Println(t)
+func (module *LoadedModule) GetDependency(t reflect.Type) *LoadedInjectable {
+	if module.IsLoaded(t) {
+		fmt.Print("is loaded: ")
+		// injectable := module.LoadInjectable(t)
+		// TODO load from module
+		// TODO check loading cycle and load dependent dependencies
+	} else {
+		fmt.Print("isn't loaded: ")
 	}
+	fmt.Println(t)
 	// TODO load dependency of t and add to module (also return)
+	return nil
 }
 
 func (module *LoadedModule) IsLoaded(t reflect.Type) bool {
@@ -68,19 +83,27 @@ func (module *LoadedModule) LoadController(classType reflect.Type) *LoadedContro
 	loadedController := CreateController()
 	className := classType.Name()
 	controllerValue := reflect.New(classType)
-	for i := 0; i < classType.NumMethod(); i++ {
-		method := classType.Method(i)
+	for methodCounter := 0; methodCounter < classType.NumMethod(); methodCounter++ {
+		method := classType.Method(methodCounter)
+		paramsAmount := method.Type.NumIn()
 		params := make([]reflect.Value, method.Type.NumIn())
-		for j := 0; j < method.Type.NumIn(); j++ {
-			paramType := method.Type.In(j)
+		for paramCounter := 0; paramCounter < paramsAmount; paramCounter++ {
+			paramType := method.Type.In(paramCounter)
 			if paramType == classType {
-				params[j] = controllerValue
-			} else {
-				module.LoadDependency(paramType)
+				params[paramCounter] = controllerValue
+			} else if paramType.Implements(reflect.TypeOf((*http.Response)(nil)).Elem()) {
+				params[paramCounter] = reflect.ValueOf((*http.Response)(nil))
+			} else if paramType.Implements(reflect.TypeOf((*http.Request)(nil)).Elem()) {
+				params[paramCounter] = reflect.ValueOf((*http.Request)(nil))
+			} else if paramType.Implements(reflect.TypeOf((*base.Injectable)(nil)).Elem()) {
+				params[paramCounter] = reflect.ValueOf(module.GetDependency(paramType))
 			}
 		}
-		loadedController.methods[method.Name] = func() {
-			fmt.Println(method.Func.Call(params))
+		loadedController.methods[method.Name] = func(res http.Response, req http.Request) {
+			for i := 0; i < paramsAmount; i++ { // TODO inject response and requests
+
+			}
+			fmt.Println(method.Func.Call(params)) // TODO think about injecting ResponseWriter and Request
 		}
 	}
 	classNameLower := strings.ToLower(className)
@@ -89,7 +112,7 @@ func (module *LoadedModule) LoadController(classType reflect.Type) *LoadedContro
 	}
 	return loadedController
 }
+
 func (module *LoadedModule) LoadInjectable(t reflect.Type) *LoadedInjectable {
-	loadedInjectable := new(LoadedInjectable)
-	return loadedInjectable
+	return nil // TODO implementation
 }
