@@ -12,7 +12,7 @@ type LoadedModule struct {
 	Module      *base.Module
 	Controllers []*LoadedController
 	Providers   []*LoadedInjectable
-	Imports     []*LoadedModule
+	Imports     []*LoadedModule // TODO find a clean way to import other Modules
 }
 
 func CreateModule(module *base.Module) *LoadedModule {
@@ -41,6 +41,7 @@ func (module *LoadedModule) Load() {
 		newLoadedModule := module.LoadModule(module.Module.Imports[i])
 		module.Imports = append(module.Imports, newLoadedModule)
 	}
+
 	// TODO load first all dependencies
 	for i := 0; i < len(module.Module.Controllers); i++ {
 		controller := module.LoadController(module.Module.Controllers[i])
