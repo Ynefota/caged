@@ -1,10 +1,12 @@
 package test
 
-import "caged/http"
+import (
+	"caged/ctx"
+)
 
 type HelloWorldController struct {
 }
 
-func (controller HelloWorldController) Name(dep *Dep, response http.Response) string {
+func (controller *HelloWorldController) Name(dep *Dep, ctx ctx.Context) string {
 	return "name " + dep.name
 }

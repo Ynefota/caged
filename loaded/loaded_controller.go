@@ -1,14 +1,16 @@
 package loaded
 
-import "caged/http"
+import (
+	"caged/ctx"
+)
 
 type LoadedController struct {
 	name    string
-	methods map[string]func(res http.Response, req http.Request)
+	methods map[string]func(ctx ctx.Context)
 }
 
 func CreateController() *LoadedController {
 	controller := new(LoadedController)
-	controller.methods = make(map[string]func(res http.Response, req http.Request))
+	controller.methods = make(map[string]func(ctx ctx.Context))
 	return controller
 }

@@ -9,7 +9,7 @@ type LoadedInjectable struct {
 	Injectable base.Injectable
 }
 
-func CreateInjectable(t reflect.Type) LoadedInjectable {
-	injectable := LoadedInjectable{}
+func CreateInjectable(t reflect.Type) *LoadedInjectable {
+	injectable := new(LoadedInjectable)
 	return injectable
 }
