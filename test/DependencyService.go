@@ -9,6 +9,6 @@ type Dep struct {
 	name string
 }
 
-func (d *Dep) New() {
+func (d *Dep) Init() {
 	d.name = "Xy"
 }

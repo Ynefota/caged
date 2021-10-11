@@ -2,11 +2,8 @@ package loaded
 
 import (
 	"caged/base"
-	"caged/ctx"
-	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 )
 
 type LoadedModule struct {
@@ -47,6 +44,10 @@ func (module *LoadedModule) Load() {
 		provider := module.Module.Providers[i]
 		injectable, _ := module.LoadInjectable(provider)
 		module.Providers = append(module.Providers, injectable)
+	}
+	for i := 0; i < len(module.Providers); i++ {
+		loadedProvider := module.Providers[i]
+		loadedProvider.AutoWire(module)
 	}
 	// TODO load first all dependencies
 	for i := 0; i < len(module.Module.Controllers); i++ {
@@ -91,83 +92,17 @@ func (module *LoadedModule) IsLoaded(t reflect.Type) bool {
 }
 
 func (module *LoadedModule) LoadInjectable(t reflect.Type) (*LoadedInjectable, error) { // TODO concentrate on everything because its little complex
-	var loadedInjectable *LoadedInjectable
-	if module.currentInjectable == nil {
-		module.currentInjectable = t
-	} else if module.currentInjectable == t {
-		return nil, errors.New("makes loop") // TODO error handling
-	}
-	if !module.CanLoad(t) {
-		return nil, errors.New("not found in module: " + t.Name())
-	}
-	if module.IsLoaded(t) {
-		return module.GetInjectable(t), nil
-	} else {
-		loadedInjectable = CreateInjectable(t)
-		injectableType := reflect.TypeOf(loadedInjectable.Injectable)
-		newMethod, _ := injectableType.MethodByName("New")
-		paramsAmount := newMethod.Type.NumIn()
-		params := make([]reflect.Value, paramsAmount)
-		for p := 0; p < paramsAmount; p++ {
-			// TODO implementation
-			paramType := newMethod.Type.In(p)
-			loadedParam, err := module.LoadInjectable(paramType)
-			if err != nil {
-				return loadedParam, err
-			}
-			param := loadedParam.Injectable
-			params[p] = reflect.ValueOf(param)
-		}
-	}
-
-	if module.currentInjectable == t {
-		module.currentInjectable = nil
-	}
+	loadedInjectable := CreateInjectable(t)
+	loadedInjectable.Init()
 	return loadedInjectable, nil
 }
 
-func (module *LoadedModule) CanLoad(t reflect.Type) bool {
+func (module *LoadedModule) CanLoad(t reflect.Type) bool { // check if type is in module
 	return true // TODO implement
 }
 
 func (module *LoadedModule) LoadController(classType reflect.Type) *LoadedController {
-	loadedController := CreateController()
-	className := classType.Name()
-	controllerValue := reflect.New(classType).Elem()
-	for m := 0; m < controllerValue.NumMethod(); m++ {
-		method := controllerValue.Method(m)
-		paramsAmount := method.Type().NumIn()
-		params := make([]reflect.Value, paramsAmount)
-		ctxPosition := -1
-		for p := 0; p < paramsAmount; p++ {
-			paramType := method.Type().In(p)
-			if paramType == classType {
-				continue
-			} else if paramType == reflect.TypeOf((*ctx.Context)(nil)).Elem() {
-				ctxPosition = p
-			} else if paramType.Implements(reflect.TypeOf((*base.Injectable)(nil)).Elem()) {
-				param := module.GetInjectable(paramType)
-				var paramValue reflect.Value
-				if param == nil {
-					paramValue = reflect.ValueOf(nil) // TODO cleanup & fix
-				} else {
-					paramValue = reflect.ValueOf(param.Injectable)
-				}
-				params[p] = paramValue
-			}
-		}
-		loadedController.methods[classType.Method(m).Name] = func(ctx ctx.Context) {
-			if ctxPosition != -1 {
-				params[ctxPosition] = reflect.ValueOf(ctx)
-			}
-			// get return value of controller
-			fmt.Println(method.Call(params)) // TODO think about return value
-		}
-		loadedController.methods[classType.Method(m).Name](ctx.Context{})
-	}
-	classNameLower := strings.ToLower(className)
-	if strings.HasSuffix(classNameLower, "controller") {
-		className = className[0:strings.LastIndex(classNameLower, "controller")]
-	}
+	loadedController := CreateController(classType)
+	loadedController.Load(module)
 	return loadedController
 }
