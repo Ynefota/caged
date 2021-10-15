@@ -5,8 +5,9 @@ import (
 )
 
 type HelloWorldController struct {
+	dep *Dep
 }
 
-func (controller *HelloWorldController) Name(dep *Dep, ctx ctx.Context) string {
-	return "name " + dep.name
+func (controller *HelloWorldController) Name(ctx ctx.Context) string {
+	return "name " + controller.dep.name
 }

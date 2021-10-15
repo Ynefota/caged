@@ -10,11 +10,19 @@ import (
 func main() {
 	module := base.Module{
 		Controllers: []reflect.Type{
-			reflect.TypeOf(&test.HelloWorldController{}),
+			reflect.TypeOf(test.HelloWorldController{}),
+		},
+		Providers: []reflect.Type{
+			reflect.TypeOf(test.Dep{}),
 		},
 	}
 	app := application.Create(&module)
 
 	pApp := &app
 	pApp.Test()
+
+	/*t := reflect.TypeOf(test.Dep{})
+	elm := reflect.New(t)
+	fmt.Println(elm)
+	elm.MethodByName("Init").Call(nil)*/
 }

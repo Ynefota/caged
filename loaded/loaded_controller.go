@@ -1,7 +1,6 @@
 package loaded
 
 import (
-	"caged/base"
 	"caged/ctx"
 	"fmt"
 	"reflect"
@@ -23,7 +22,8 @@ func CreateController(t reflect.Type) *LoadedController {
 func (controller *LoadedController) Load(module *LoadedModule) {
 	controllerName := controller.controllerType.Name()
 	controllerValue := reflect.New(controller.controllerType).Elem()
-	for m := 0; m < controllerValue.NumMethod(); m++ {
+	controllerValue.NumMethod()
+	/*for m := 0; m < controllerValue.NumMethod(); m++ {
 		method := controllerValue.Method(m)
 		paramsAmount := method.Type().NumIn()
 		params := make([]reflect.Value, paramsAmount)
@@ -54,7 +54,7 @@ func (controller *LoadedController) Load(module *LoadedModule) {
 			fmt.Println(method.Call(params)) // TODO think about return value
 		}
 		controller.methods[controller.controllerType.Method(m).Name](ctx.Context{})
-	}
+	}*/
 	controllerName = strings.ToLower(controllerName)
 	if strings.HasSuffix(controllerName, "controller") {
 		controllerName = controllerName[0:strings.LastIndex(controllerName, "controller")]

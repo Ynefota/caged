@@ -47,6 +47,7 @@ func (module *LoadedModule) Load() {
 	}
 	for i := 0; i < len(module.Providers); i++ {
 		loadedProvider := module.Providers[i]
+		fmt.Println(i)
 		loadedProvider.AutoWire(module)
 	}
 	// TODO load first all dependencies
@@ -93,6 +94,7 @@ func (module *LoadedModule) IsLoaded(t reflect.Type) bool {
 
 func (module *LoadedModule) LoadInjectable(t reflect.Type) (*LoadedInjectable, error) { // TODO concentrate on everything because its little complex
 	loadedInjectable := CreateInjectable(t)
+	fmt.Println(loadedInjectable.Injectable)
 	loadedInjectable.Init()
 	return loadedInjectable, nil
 }

@@ -2,6 +2,7 @@ package test
 
 import (
 	"caged/base"
+	"fmt"
 )
 
 type Dep struct {
@@ -11,4 +12,5 @@ type Dep struct {
 
 func (d *Dep) Init() {
 	d.name = "Xy"
+	fmt.Println("hi")
 }
