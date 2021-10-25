@@ -17,7 +17,9 @@ func CreateInjectable(t reflect.Type) *LoadedInjectable {
 }
 
 func (injectable *LoadedInjectable) Init() {
-	injectable.Injectable.MethodByName("Init").Call(nil)
+	if object, ok := injectable.Injectable.Interface().(interface{ Init() }); ok {
+		object.Init()
+	}
 }
 
 func (injectable *LoadedInjectable) AutoWire(module *LoadedModule) {
@@ -39,7 +41,7 @@ func (injectable *LoadedInjectable) AutoWire(module *LoadedModule) {
 }
 
 func (injectable *LoadedInjectable) AfterWire() {
-	if object, ok := injectable.Injectable.Interface().(interface{ AfterWire() }); ok {
-		object.AfterWire()
+	if _, ok := injectable.Injectable.Interface().(interface{ AfterWire() }); ok {
+		//object.AfterWire()
 	}
 }

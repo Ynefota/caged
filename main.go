@@ -18,8 +18,8 @@ func main() {
 	}
 	app := application.Create(&module)
 
-	pApp := &app
-	pApp.Test()
+	pApp := app
+	pApp.Listen(8000)
 
 	/*t := reflect.TypeOf(test.Dep{})
 	elm := reflect.New(t)

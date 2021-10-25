@@ -8,30 +8,40 @@ import (
 	"caged/loaded"
 	"caged/routing"
 	"github.com/valyala/fasthttp"
+	"log"
 	"strconv"
 )
 
 type Application struct {
 	port         int
+	server       *fasthttp.Server
 	router       *routing.Router
 	module       *base.Module
 	loadedModule *loaded.LoadedModule
 }
 
-func Create(module *base.Module) Application {
-	app := Application{}
+func Create(module *base.Module) *Application {
+	app := &Application{}
 	app.module = module
 	app.loadedModule = inject.LoadModule(module)
-	app.router = routing.CreateRouter(app.loadedModule)
+	app.router = inject.LoadRouter(app.loadedModule)
+	app.server = &fasthttp.Server{
+		Handler: app.router.Handle,
+	}
 	return app
+}
+func (app *Application) Module() *loaded.LoadedModule {
+	return app.loadedModule
 }
 
 func (app *Application) Listen(port int) {
 	app.port = port
 	strPort := ":" + strconv.Itoa(app.port)
-	_ = fasthttp.ListenAndServe(strPort, app.router.Handle)
+	if err := app.server.ListenAndServe(strPort); err != nil {
+		log.Fatalf("error in ListenAndServe: %s", err)
+	}
 }
 
-func (app *Application) Test() {
-
+func (app *Application) UseStaticAssets(folder string) {
+	app.router.UseStaticAssets(folder)
 }

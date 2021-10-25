@@ -52,6 +52,12 @@ func (controller *LoadedController) AutoWire(module *LoadedModule) {
 	}
 }
 
+func (controller *LoadedController) Init() {
+	if object, ok := controller.Controller.Interface().(interface{ Init() }); ok {
+		object.Init()
+	}
+}
+
 func (controller *LoadedController) AfterWire() {
 	if object, ok := controller.Controller.Interface().(interface{ AfterWire() }); ok {
 		object.AfterWire()
