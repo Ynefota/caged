@@ -2,7 +2,6 @@ package loaded
 
 import (
 	"caged/base"
-	"fmt"
 	"reflect"
 )
 
@@ -45,16 +44,27 @@ func (module *LoadedModule) Load() {
 		injectable, _ := module.LoadInjectable(provider)
 		module.Providers = append(module.Providers, injectable)
 	}
-	for i := 0; i < len(module.Providers); i++ {
-		loadedProvider := module.Providers[i]
-		fmt.Println(i)
-		loadedProvider.AutoWire(module)
-	}
-	// TODO load first all dependencies
 	for i := 0; i < len(module.Module.Controllers); i++ {
 		controller := module.LoadController(module.Module.Controllers[i])
 		module.Controllers = append(module.Controllers, controller)
 	}
+	for i := 0; i < len(module.Providers); i++ { // autowire injectables
+		loadedProvider := module.Providers[i]
+		loadedProvider.AutoWire(module)
+	}
+	for i := 0; i < len(module.Controllers); i++ { // autowire controllers
+		loadedController := module.Controllers[i]
+		loadedController.AutoWire(module)
+	}
+	for i := 0; i < len(module.Providers); i++ { // call after wire on injectables
+		loadedProvider := module.Providers[i]
+		loadedProvider.AfterWire()
+	}
+	for i := 0; i < len(module.Controllers); i++ { // call after wire on controllers
+		loadedController := module.Controllers[i]
+		loadedController.AfterWire()
+	}
+	// TODO load first all dependencies
 }
 
 func (module *LoadedModule) LoadModule(moduleType reflect.Type) *LoadedModule { // TODO what to with that thing
@@ -64,18 +74,30 @@ func (module *LoadedModule) LoadModule(moduleType reflect.Type) *LoadedModule { 
 	return newLoadedModule
 }
 
-func (module *LoadedModule) GetInjectable(t reflect.Type) *LoadedInjectable {
-	if module.IsLoaded(t) {
-		fmt.Print("is loaded: ")
-		// injectable := module.LoadInjectable(t)
-		// TODO get dependency from module
-		// TODO check loading cycle and load dependent dependencies
-	} else {
-		fmt.Print("isn't loaded: ")
+func (module *LoadedModule) GetInjectable(t reflect.Type) *reflect.Value {
+	for i := 0; i < len(module.Imports); i++ {
+		fromModule := module.Imports[i].GetInjectable(t)
+		if fromModule != nil {
+			return fromModule
+		}
 	}
-	fmt.Println(t)
-	// TODO just get dependency from module
+	for i := 0; i < len(module.Providers); i++ {
+		if module.Providers[i].Injectable.Type() == t {
+			return module.Providers[i].Injectable
+		}
+	}
 	return nil
+}
+
+func (module *LoadedModule) LoadInjectable(t reflect.Type) (*LoadedInjectable, error) { // TODO concentrate on everything because its little complex
+	loadedInjectable := CreateInjectable(t)
+	loadedInjectable.Init()
+	return loadedInjectable, nil
+}
+
+func (module *LoadedModule) LoadController(classType reflect.Type) *LoadedController {
+	loadedController := CreateController(classType)
+	return loadedController
 }
 
 func (module *LoadedModule) IsLoaded(t reflect.Type) bool {
@@ -85,26 +107,9 @@ func (module *LoadedModule) IsLoaded(t reflect.Type) bool {
 		}
 	}
 	for i := 0; i < len(module.Providers); i++ {
-		if reflect.TypeOf(module.Providers[i].Injectable) == t {
+		if module.Providers[i].Injectable.Type() == t {
 			return true
 		}
 	}
 	return false
-}
-
-func (module *LoadedModule) LoadInjectable(t reflect.Type) (*LoadedInjectable, error) { // TODO concentrate on everything because its little complex
-	loadedInjectable := CreateInjectable(t)
-	fmt.Println(loadedInjectable.Injectable)
-	loadedInjectable.Init()
-	return loadedInjectable, nil
-}
-
-func (module *LoadedModule) CanLoad(t reflect.Type) bool { // check if type is in module
-	return true // TODO implement
-}
-
-func (module *LoadedModule) LoadController(classType reflect.Type) *LoadedController {
-	loadedController := CreateController(classType)
-	loadedController.Load(module)
-	return loadedController
 }

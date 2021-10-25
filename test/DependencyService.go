@@ -2,15 +2,14 @@ package test
 
 import (
 	"caged/base"
-	"fmt"
 )
 
 type Dep struct {
 	base.Injectable
+	Dep  *Dep `autowired:""`
 	name string
 }
 
 func (d *Dep) Init() {
 	d.name = "Xy"
-	fmt.Println("hi")
 }
