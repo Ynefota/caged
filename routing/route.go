@@ -1,11 +1,7 @@
 package routing
 
-import "fmt"
+import "github.com/valyala/fasthttp"
 
-type Route struct {
-}
-
-func (r Route) Match(path []byte) bool {
-	fmt.Println(path)
-	return false
+type Route interface {
+	DoRouting(ctx *fasthttp.RequestCtx) bool
 }

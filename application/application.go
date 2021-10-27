@@ -36,6 +36,7 @@ func (app *Application) Module() *loaded.LoadedModule {
 
 func (app *Application) Listen(port int) {
 	app.port = port
+	app.router.Setup()
 	strPort := ":" + strconv.Itoa(app.port)
 	if err := app.server.ListenAndServe(strPort); err != nil {
 		log.Fatalf("error in ListenAndServe: %s", err)
@@ -44,4 +45,8 @@ func (app *Application) Listen(port int) {
 
 func (app *Application) UseStaticAssets(folder string) {
 	app.router.UseStaticAssets(folder)
+}
+
+func (app *Application) SetViewEngine(engine string) {
+	app.router.SetViewEngine(engine)
 }
